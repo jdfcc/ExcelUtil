@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.jdfcc.excel.annotation.ExcelExport;
 import com.jdfcc.excel.annotation.ExcelImport;
-import com.jdfcc.excel.util.ExcelClassField;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.hssf.usermodel.HSSFDataValidation;
@@ -38,7 +37,7 @@ import java.util.regex.Pattern;
  * @DateTime 2023/12/12 11:40
  */
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "deprecation"})
 public class ExcelUtils {
 
     private static final String XLSX = ".xlsx";
@@ -131,7 +130,7 @@ public class ExcelUtils {
             if (uniqueMap.containsValue(uniqueBuilder.toString())) {
                 Set<Integer> rowNumKeys = uniqueMap.keySet();
                 for (Integer num : rowNumKeys) {
-                    if (uniqueMap.get(num).equals(uniqueBuilder.toString())) {
+                    if (uniqueMap.get(num).contentEquals(uniqueBuilder)) {
                         errMsgList.add(String.format("数据唯一性校验失败,(%s)与第%s行重复)", uniqueBuilder, num));
                     }
                 }
@@ -376,7 +375,7 @@ public class ExcelUtils {
         }
         // 数字类型
         if (cell.getCellTypeEnum() == CellType.NUMERIC) {
-            String s = cell.getNumericCellValue() + "";
+            String s = String.valueOf(cell.getNumericCellValue());
             // 去掉尾巴上的小数点0
             if (Pattern.matches(".*\\.0*", s)) {
                 return s.split("\\.")[0];
@@ -386,7 +385,7 @@ public class ExcelUtils {
         }
         // 布尔值类型
         if (cell.getCellTypeEnum() == CellType.BOOLEAN) {
-            return cell.getBooleanCellValue() + "";
+            return String.valueOf(cell.getBooleanCellValue());
         }
         // 错误类型
         return cell.getCellFormula();
@@ -885,7 +884,9 @@ public class ExcelUtils {
             // 当数字类型长度超过8位时，改为字符串类型显示（Excel数字超过一定长度会显示为科学计数法）
             if (isNumeric(s) && s.length() < 8) {
                 cell.setCellType(CellType.NUMERIC);
-//                cell.setCellValue(Double.parseDouble(s));
+                if (!s.isEmpty()) {
+                    cell.setCellValue(Double.parseDouble(s));
+                }
                 return CELL_OTHER;
             } else {
                 cell.setCellType(CellType.STRING);
